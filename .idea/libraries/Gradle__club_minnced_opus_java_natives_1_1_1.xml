@@ -1,0 +1,10 @@
+<component name="libraryTable">
+  <library name="Gradle: club.minnced:opus-java-natives:1.1.1" type="java-imported" external-system-id="GRADLE">
+    <properties groupId="club.minnced" artifactId="opus-java-natives" version="1.1.1" />
+    <CLASSES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/club.minnced/opus-java-natives/1.1.1/183af66d80cd508bbf45343f30ee280e0750f416/opus-java-natives-1.1.1.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

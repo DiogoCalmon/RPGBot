@@ -1,0 +1,10 @@
+<component name="libraryTable">
+  <library name="Gradle: com.google.crypto.tink:tink:1.14.1" type="java-imported" external-system-id="GRADLE">
+    <properties groupId="com.google.crypto.tink" artifactId="tink" version="1.14.1" />
+    <CLASSES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/com.google.crypto.tink/tink/1.14.1/eea00d74f51389239e9bf0220662e2bbb5089f22/tink-1.14.1.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
