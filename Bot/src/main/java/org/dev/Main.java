@@ -9,5 +9,7 @@ import java.util.EnumSet;
 public class Main {
     public static void main(String[] args) {
         JDA kit = JDABuilder.createDefault("", EnumSet.allOf(GatewayIntent.class)).build();
+
+        kit.addEventListener(new Keys());
     }
 }
