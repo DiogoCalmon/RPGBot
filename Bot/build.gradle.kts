@@ -11,18 +11,20 @@ val jdaVersion = "5.2.1" //
 
 repositories {
     mavenCentral()
+    maven {url = uri("https://jitpack.io")}
+    maven { url = uri("https://oss.sonatype.org/content/repositories/snapshots/") }
 }
 
 dependencies {
     implementation("net.dv8tion:JDA:$jdaVersion")
     implementation("ch.qos.logback:logback-classic:1.4.11")
+    implementation("com.squareup.okhttp3:okhttp:4.11.0")
+    implementation("org.json:json:20230227")
 }
 
 tasks.withType<JavaCompile> {
     options.encoding = "UTF-8"
     options.isIncremental = true
-
-    // Set this to the version of java you want to use,
-    // the minimum required for JDA is 1.8
-    sourceCompatibility = "1.8"
+    sourceCompatibility = "11"
+    targetCompatibility = "11"
 }
