@@ -6,18 +6,8 @@ import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import okhttp3.*;
 import org.json.JSONObject;
-import com.azure.ai.inference.ChatCompletionsClient;
-import com.azure.ai.inference.ChatCompletionsClientBuilder;
-import com.azure.ai.inference.models.ChatCompletions;
-import com.azure.ai.inference.models.ChatCompletionsOptions;
-import com.azure.ai.inference.models.ChatRequestMessage;
-import com.azure.ai.inference.models.ChatRequestSystemMessage;
-import com.azure.ai.inference.models.ChatRequestUserMessage;
-import com.azure.core.credential.AzureKeyCredential;
-import com.azure.core.util.Configuration;
 
 import java.io.IOException;
-import java.util.concurrent.CompletableFuture;
 
 public class RPG extends ListenerAdapter {
 
@@ -29,42 +19,43 @@ public class RPG extends ListenerAdapter {
             MessageChannel channel = event.getChannel();
             channel.sendMessage("Começando a jornada:").queue();
 
+            String prompt = "Você é um mestre de RPG. Comece uma campanha lendária descrevendo o cenário inicial:";
             try {
-                String prompt = "Você é um mestre de RPG. Comece uma campanha lendária descrevendo o cenário inicial:";
-                CompletableFuture<String> aiResponse = getAiResponse(prompt);
-                aiResponse.thenAccept(response -> channel.sendMessage(response).queue())
-                        .exceptionally(error -> {
-                            error.printStackTrace();
-                            channel.sendMessage("Ocorreu um erro ao gerar a história.").queue();
-                            return null;
-                        });
-            } catch (Exception error) {
-                error.printStackTrace();
-                channel.sendMessage("Ocorreu um erro ao processar o comando.").queue();
+                String aiResponse = getAiResponse(prompt);
+                channel.sendMessage(aiResponse).queue();
+            } catch (IOException e) {
+                e.printStackTrace();
+                channel.sendMessage("Ocorreu um erro ao gerar a história.").queue();
             }
         }
     }
 
-    private String getAiResponse(String prompt) {
-        String key = Configuration.getGlobalConfiguration().get("GITHUB_TOKEN");
-        String endpoint = "https://models.inference.ai.azure.com";
-        String model = "gpt-4o";
 
-        ChatCompletionsClient client = new ChatCompletionsClientBuilder()
-                .credential(new AzureKeyCredential(key))
-                .endpoint(endpoint)
-                .buildClient();
+    private String getAiResponse(String prompt) throws IOException {
+        // Criando a requisição para o Hugging Face
+        OkHttpClient client = new OkHttpClient();
 
-        List<ChatRequestMessage> chatMessages = Arrays.asList(
-                new ChatRequestSystemMessage(""),
-                new ChatRequestUserMessage("Can you explain the basics of machine learning?")
-        );
+        // Montando o corpo da requisição com o texto de entrada
+        JSONObject json = new JSONObject();
+        json.put("inputs", prompt);
 
-        ChatCompletionsOptions chatCompletionsOptions = new ChatCompletionsOptions(chatMessages);
-        chatCompletionsOptions.setModel(model);
+        // Construindo a requisição
+        RequestBody body = RequestBody.create(json.toString(), MediaType.get("application/json"));
+        Request request = new Request.Builder()
+                .url(Keys.API_URL)
+                .post(body)
+                .addHeader("Authorization", "Bearer " + Keys.HUGGING_FACE_API_KEY)
+                .build();
 
-        ChatCompletions completions = client.complete(chatCompletionsOptions);
-
-        return completions.getChoice().getMessage().getContent();
+        // Enviando a requisição e recebendo a resposta
+        try (Response response = client.newCall(request).execute()) {
+            if (response.isSuccessful() && response.body() != null) {
+                String responseBody = response.body().string();
+                JSONObject jsonResponse = new JSONObject(responseBody.substring(1, responseBody.length() - 1)); // Remove os colchetes []
+                return jsonResponse.getString("generated_text");
+            } else {
+                return "Erro na comunicação com o modelo.";
+            }
+        }
     }
 }
