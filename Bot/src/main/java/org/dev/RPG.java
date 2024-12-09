@@ -6,6 +6,15 @@ import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import okhttp3.*;
 import org.json.JSONObject;
+import com.azure.ai.inference.ChatCompletionsClient;
+import com.azure.ai.inference.ChatCompletionsClientBuilder;
+import com.azure.ai.inference.models.ChatCompletions;
+import com.azure.ai.inference.models.ChatCompletionsOptions;
+import com.azure.ai.inference.models.ChatRequestMessage;
+import com.azure.ai.inference.models.ChatRequestSystemMessage;
+import com.azure.ai.inference.models.ChatRequestUserMessage;
+import com.azure.core.credential.AzureKeyCredential;
+import com.azure.core.util.Configuration;
 
 import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
@@ -36,50 +45,26 @@ public class RPG extends ListenerAdapter {
         }
     }
 
-    private CompletableFuture<String> getAiResponse(String prompt) {
-        return CompletableFuture.supplyAsync(() -> {
-            try {
-                // Configuração da API do Cohere
-                String apiKey = Keys.COHERE_API_KEY; // Substitua pela sua chave de API do Cohere
-                String apiUrl = "https://api.cohere.ai/v1/generate";
+    private String getAiResponse(String prompt) {
+        String key = Configuration.getGlobalConfiguration().get("GITHUB_TOKEN");
+        String endpoint = "https://models.inference.ai.azure.com";
+        String model = "gpt-4o";
 
-                OkHttpClient client = new OkHttpClient();
+        ChatCompletionsClient client = new ChatCompletionsClientBuilder()
+                .credential(new AzureKeyCredential(key))
+                .endpoint(endpoint)
+                .buildClient();
 
-                // Corpo da requisição em JSON
-                JSONObject json = new JSONObject();
-                json.put("model", "command-xlarge-nightly");
-                json.put("prompt", prompt);
-                json.put("max_tokens", 300);
-                json.put("temperature", 0.7);
-                json.put("k", 0);
-                json.put("stop_sequences", new String[]{"\n"});
+        List<ChatRequestMessage> chatMessages = Arrays.asList(
+                new ChatRequestSystemMessage(""),
+                new ChatRequestUserMessage("Can you explain the basics of machine learning?")
+        );
 
-                RequestBody body = RequestBody.create(json.toString(), MediaType.get("application/json"));
+        ChatCompletionsOptions chatCompletionsOptions = new ChatCompletionsOptions(chatMessages);
+        chatCompletionsOptions.setModel(model);
 
-                // Requisição HTTP
-                Request request = new Request.Builder()
-                        .url(apiUrl)
-                        .post(body)
-                        .addHeader("Authorization", "Bearer " + apiKey)
-                        .addHeader("Content-Type", "application/json")
-                        .build();
+        ChatCompletions completions = client.complete(chatCompletionsOptions);
 
-                // Envio e leitura da resposta
-                try (Response response = client.newCall(request).execute()) {
-                    if (response.isSuccessful() && response.body() != null) {
-                        JSONObject jsonResponse = new JSONObject(response.body().string());
-                        return jsonResponse.getJSONArray("generations")
-                                .getJSONObject(0)
-                                .getString("text")
-                                .trim();
-                    } else {
-                        return "Erro ao conectar-se à API: " + (response.body() != null ? response.body().string() : "Sem detalhes.");
-                    }
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-                return "Erro ao gerar a resposta da IA.";
-            }
-        });
+        return completions.getChoice().getMessage().getContent();
     }
 }

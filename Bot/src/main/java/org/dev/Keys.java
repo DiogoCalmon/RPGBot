@@ -1,6 +1,6 @@
 package org.dev;
 
 public class Keys {
-    public final String DISCORD_KEY = "";
-    public final String GPT_KEY = "";
+    public static final String DISCORD_KEY = "";
+    public static final String COHERE_API_KEY = "";
 }
