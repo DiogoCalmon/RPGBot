@@ -17,6 +17,7 @@ repositories {
 
 dependencies {
     implementation("net.dv8tion:JDA:5.2.1")
+    implementation("ch.qos.logback:logback-classic:1.4.11")
     implementation("com.squareup.okhttp3:okhttp:4.9.3") // Para fazer as requisições HTTP
     implementation("org.json:json:20230227") // Para processar JSON
 }

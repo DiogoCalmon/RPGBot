@@ -8,7 +8,7 @@ import java.util.EnumSet;
 
 public class Main {
     public static void main(String[] args) {
-        JDA kit = JDABuilder.createDefault("", EnumSet.allOf(GatewayIntent.class)).build();
+        JDA kit = JDABuilder.createDefault(Keys.DISCORD_KEY, EnumSet.allOf(GatewayIntent.class)).build();
 
         kit.addEventListener(new RPG());
     }
