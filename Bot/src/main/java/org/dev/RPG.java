@@ -1,5 +1,6 @@
 package org.dev;
 
+import com.google.gson.JsonObject;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
@@ -9,9 +10,7 @@ import okhttp3.*;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
+import com.google.gson.JsonParser;
 
 public class RPG extends ListenerAdapter {
 
@@ -42,34 +41,30 @@ public class RPG extends ListenerAdapter {
                 .writeTimeout(60, TimeUnit.SECONDS)   // Tempo de escrita
                 .build();
 
-        JSONObject requestBodyJson = new JSONObject();
-        requestBodyJson.put("inputs", prompt);  // Agora é apenas uma string, e não um array
+        // Criar o corpo da requisição com Gson
+        JsonObject requestBody = new JsonObject();
+        JsonObject content = new JsonObject();
+        content.addProperty("text", prompt);
+        requestBody.add("prompt", content);
 
-        RequestBody body = RequestBody.create(requestBodyJson.toString(), MediaType.get("application/json"));
+        // Construir a requisição HTTP
         Request request = new Request.Builder()
-                .url("https://api-inference.huggingface.co/models/distilgpt2")
-                .post(body)
-                .addHeader("Authorization", "Bearer " + Keys.HUGGING_FACE_API_KEY)
+                .url(Keys.API_URL)  // Certifique-se de definir a URL
+                .post(RequestBody.create(requestBody.toString(), MediaType.parse("application/json")))
                 .build();
-
 
         // Enviando a requisição e recebendo a resposta
         try (Response response = client.newCall(request).execute()) {
 
             if (response.isSuccessful()) {
                 String responseBody = response.body().string();
-                try {
-                    JSONArray jsonArray = new JSONArray(responseBody);
-                    JSONObject jsonResponse = jsonArray.getJSONObject(0); // Pega o primeiro item do array
-                    if (jsonResponse.has("generated_text")) {
-                        return jsonResponse.getString("generated_text");
-                    } else {
-                        return "Chave 'generated_text' não encontrada na resposta.";
-                    }
-                }catch (JSONException e) {
-                    return "Erro ao analisar a resposta JSON: " + e.getMessage();
+                // Usando Gson para processar a resposta JSON
+                JsonObject jsonResponse = JsonParser.parseString(responseBody).getAsJsonObject();
+                if (jsonResponse.has("generated_text")) {
+                    return jsonResponse.get("generated_text").getAsString();
+                } else {
+                    return "Chave 'generated_text' não encontrada na resposta.";
                 }
-
             } else {
                 String errorResponse = response.body().string();
                 System.out.println("Erro na comunicação com o modelo: " + errorResponse);
@@ -77,5 +72,4 @@ public class RPG extends ListenerAdapter {
             }
         }
     }
-
 }
