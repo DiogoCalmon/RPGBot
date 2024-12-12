@@ -49,7 +49,7 @@ public class RPG extends ListenerAdapter {
 
         // Construir a requisição HTTP
         Request request = new Request.Builder()
-                .url(Keys.API_URL)  // Certifique-se de definir a URL
+                .url("https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateText?key=" + Keys.GEMINI_API_KEY)  // Certifique-se de definir a URL
                 .post(RequestBody.create(requestBody.toString(), MediaType.parse("application/json")))
                 .build();
 
