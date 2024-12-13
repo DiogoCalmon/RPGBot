@@ -11,20 +11,25 @@ import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 import com.google.gson.JsonArray;
-
 import com.google.gson.JsonParser;
 
 public class RPG extends ListenerAdapter {
+    private boolean historyRunning = false;
 
     @Override
     public void onMessageReceived(MessageReceivedEvent event) {
         Message message = event.getMessage();
 
+        if (historyRunning) {
+            System.out.println("testando");
+        }
+
         if (message.getContentRaw().equals("!rpg")) {
+            historyRunning = true;
             MessageChannel channel = event.getChannel();
             channel.sendMessage("Começando a jornada:").queue();
 
-            String prompt = "Crie um cenário inicial de RPG em português com menos de 2000 caracteres e sem criar espaços brancos entre parágrafos, ambientado em uma cidade sombria e vitoriana. O cenário deve ser misterioso e sobrenatural, lembrando as ruas de Londres durante os tempos de Jack, o Estripador, com uma atmosfera de terror. As ruas são estreitas e sujas, e há assassinatos misteriosos. A população sussurra sobre criaturas das sombras e cultos secretos. O jogador, que pode ser um detetive ou alguém fora da lei, é atraído para investigar as mortes. O clima deve ser tenso e sombrio.";
+            String prompt = "Crie um cenário inicial de RPG em português com menos de 2000 caracteres, ambientado em uma cidade sombria e vitoriana. O cenário deve ser misterioso e sobrenatural, lembrando as ruas de Londres durante os tempos de Jack, o Estripador, com uma atmosfera de terror. As ruas são estreitas e sujas, e há assassinatos misteriosos. A população sussurra sobre criaturas das sombras e cultos secretos. O jogador, que pode ser um detetive ou alguém fora da lei, é atraído para investigar as mortes. O clima deve ser tenso e sombrio.";
             try {
                 String aiResponse = getAiResponse(prompt);
                 channel.sendMessage(aiResponse).queue();
@@ -38,12 +43,11 @@ public class RPG extends ListenerAdapter {
 
     private String getAiResponse(String prompt) throws IOException {
         OkHttpClient client = new OkHttpClient.Builder()
-                .connectTimeout(60, TimeUnit.SECONDS) // Tempo de conexão
-                .readTimeout(60, TimeUnit.SECONDS)    // Tempo de leitura
-                .writeTimeout(60, TimeUnit.SECONDS)   // Tempo de escrita
+                .connectTimeout(60, TimeUnit.SECONDS)
+                .readTimeout(60, TimeUnit.SECONDS)
+                .writeTimeout(60, TimeUnit.SECONDS)
                 .build();
 
-        // Corpo da requisição JSON
         JsonObject requestBody = new JsonObject();
         requestBody.addProperty("model", "llama-3.3-70b-versatile");
         requestBody.addProperty("temperature", 0.9);
@@ -69,8 +73,12 @@ public class RPG extends ListenerAdapter {
         try (Response response = client.newCall(request).execute()) {
             if (response.isSuccessful()) {
                 String responseBody = response.body().string();
-                // Usando Gson para processar a resposta JSON
                 JsonObject jsonResponse = JsonParser.parseString(responseBody).getAsJsonObject();
+
+                JsonObject usage = jsonResponse.getAsJsonObject("usage");
+                int tokensUsed = usage.get("total_tokens").getAsInt();
+                System.out.println("Tokens usados: " + tokensUsed);
+
                     return jsonResponse
                             .getAsJsonArray("choices")
                             .get(0)
